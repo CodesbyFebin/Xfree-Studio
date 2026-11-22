@@ -1,0 +1,13 @@
+name: Security
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          if git ls-files | grep -Ei '(^|/)(service.?account.*\.json|firebase-adminsdk.*\.json|\.env\.local|\.env\.production|.*\.pem)$'; then exit 1; fi
+          grep -q 'request.auth.uid == userId' firestore.rules
+          ! grep -Eq 'allow (read|write): if true' firestore.rules

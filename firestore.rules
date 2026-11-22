@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  match /users/{userId}/projects/{projectId} {
+   function owner(){return request.auth != null && request.auth.uid == userId;}
+   function valid(){
+    let p=request.resource.data;
+    return p.keys().hasOnly(['name','prompt','files','createdAt','version','ownerId','updatedAt'])
+     && p.keys().hasAll(['name','prompt','files','createdAt','version','ownerId','updatedAt'])
+     && p.ownerId==userId && p.name is string && p.name.size()>0 && p.name.size()<=40
+     && p.name==projectId && p.prompt is string && p.prompt.size()<=1200
+     && p.createdAt is string && p.version==1 && p.files is list && p.files.size()<=30
+     && request.resource.size < 500 * 1024;
+   }
+   allow get,list: if owner();
+   allow create,update: if owner() && valid();
+   allow delete: if owner();
+  }
+ }
+}

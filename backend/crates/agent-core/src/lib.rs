@@ -64,7 +64,10 @@ impl AgentTask {
 
     pub fn transition(&mut self, next: TaskState) -> Result<(), TaskError> {
         if !self.state.can_transition(next) {
-            return Err(TaskError::InvalidTransition { from: self.state, to: next });
+            return Err(TaskError::InvalidTransition {
+                from: self.state,
+                to: next,
+            });
         }
         self.state = next;
         self.updated_at = Utc::now();

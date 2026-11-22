@@ -44,3 +44,52 @@ pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; }
 footer { text-align:center; font-size:12px; padding-top:64px; }
 @media(max-width:760px) { .page { padding:19px; } .tag { display:none; } .hero { margin-top:60px; } h1 { letter-spacing:-2px; } .features { grid-template-columns:repeat(2,1fr); } .roadmap { grid-template-columns:1fr; } .console { padding:20px; } }
 @media(max-width:400px) { .features { grid-template-columns:1fr; } .brand { font-size:20px; } }
+
+/* Xfree green-black visual identity */
+:root {color:#eaffef;background:#030705}
+body {background:radial-gradient(ellipse at 55% -20%,#0b401d 0%,#030705 49%)}
+.brand-symbol,.brand b,h1 em {color:#35f56a;text-shadow:0 0 18px #1af45a55}
+h1 em {background:linear-gradient(95deg,#21f65c,#b4ffc4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow,.features svg,.roadmap svg,.section-title svg {color:#3aff75}
+.features article,.console,.roadmap>div,.studio-shell {background:#08140e;border-color:#205c34}
+.tag {border-color:#246c3c;color:#90d9a4}
+.status {background:#0c3620;color:#78ff9d}
+button {background:linear-gradient(110deg,#1cd957,#5eff87);color:#041107}
+button:hover:not(:disabled) {filter:brightness(1.08)}
+textarea,select {background:#07130c;border-color:#26673d}
+.studio-shell {border:1px solid #205c34;border-radius:20px;padding:28px;margin-top:34px}
+.studio-heading {display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+.studio-heading h2 {font-size:clamp(30px,5vw,48px);margin:12px 0}
+.studio-heading h2 em {font-style:normal;color:#3aff75}
+.studio-heading p,.prompt-bar small,.workspace-message,.preview-area small {color:#a3c4ac}
+.studio-pill {border:1px solid #267b44;border-radius:30px;padding:8px 12px;white-space:nowrap;color:#7effa4;font-size:11px}
+.prompt-bar {margin:20px 0;padding:18px;background:#06100b;border:1px solid #1e4c30;border-radius:14px}
+.prompt-bar label {margin:0 0 12px}
+.prompt-controls {display:flex;gap:10px}
+.prompt-controls input {min-width:0;flex:1;border-radius:10px;background:#0a1a10;border:1px solid #286a41;color:white;padding:14px}
+.prompt-controls button {white-space:nowrap}
+.prompt-bar small {display:block;margin-top:10px}
+.workspace-grid {display:grid;grid-template-columns:220px minmax(0,1fr);border:1px solid #225a35;border-radius:14px;overflow:hidden;min-height:420px}
+.workspace-sidebar {background:#07100b;padding:16px;border-right:1px solid #225a35}
+.workspace-sidebar strong {display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.workspace-sidebar .file-item,.workspace-actions button,.workspace-tabs button {background:transparent;color:#b4d8bc;border:0;box-shadow:none;font-size:13px}
+.workspace-sidebar .file-item {width:100%;justify-content:flex-start;text-align:left;padding:10px 8px;border-radius:8px}
+.workspace-sidebar .file-item.active {background:#113e22;color:#5dff8c}
+.workspace-actions {display:flex;flex-direction:column;gap:5px;margin-top:24px}
+.workspace-actions button {border:1px solid #27683f;justify-content:center}
+.workspace-main {min-width:0;background:#050c07}
+.workspace-tabs {display:flex;gap:6px;padding:12px;border-bottom:1px solid #225a35}
+.workspace-tabs button {border-radius:8px}
+.workspace-tabs button.active {background:#154b2a;color:#5dff8c}
+.editor-area {padding:14px}
+.editor-caption {font-size:12px;color:#80be91;margin-bottom:10px}
+.editor-area textarea {width:100%;min-height:350px;resize:vertical;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#020804;border:1px solid #205634}
+.spec-area {padding:18px;max-height:440px;overflow:auto}
+.spec-area h3 {color:#58ff8b;text-transform:capitalize}
+.spec-area p {display:flex;gap:8px;color:#bfd8c4;font-size:13px;line-height:1.5}
+.spec-area svg {flex-shrink:0;color:#5dff8c}
+.preview-area {padding:12px}
+.preview-area iframe {width:100%;height:360px;border:1px solid #225a35;border-radius:10px;background:#fff}
+.preview-area small {display:block;margin-top:10px}
+.workspace-message {min-height:18px;font-size:13px}
+@media(max-width:760px) {.studio-shell{padding:16px}.studio-heading{flex-direction:column}.prompt-controls{flex-direction:column}.workspace-grid{grid-template-columns:1fr}.workspace-sidebar{border-right:0;border-bottom:1px solid #225a35}.workspace-actions{flex-direction:row}.workspace-sidebar .file-item{display:inline-flex;width:auto;margin:3px}.workspace-main{min-height:400px}}

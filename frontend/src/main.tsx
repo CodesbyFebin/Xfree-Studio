@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Activity, ArrowRight, BrainCircuit, Cpu, Globe2, Network, Shield, Terminal, Workflow } from 'lucide-react';
 import './style.css';
+import { StudioWorkspace } from './StudioWorkspace';
 
 type Tool = 'word_count' | 'word_frequency' | 'echo';
 type Task = { id: string; agent_id: string; tool: string; state: string; input: string; output?: string | null };
@@ -61,7 +62,7 @@ function App() {
         <span className="tag">RUST CORE · A2A ROADMAP · MCP ROADMAP</span>
       </nav>
       <header className="hero">
-        <div className="eyebrow">AGENTIC SYSTEMS / FOUNDATION 0.1</div>
+        <div className="eyebrow">AGENTIC SYSTEMS / V1 WORKSPACE PREVIEW</div>
         <h1>Build beyond <em>limits.</em></h1>
         <p>Tools that work today. A modular Rust foundation for more powerful agents, workflows and interoperability tomorrow.</p>
         <div className="features">
@@ -91,6 +92,7 @@ function App() {
         {error && <p role="alert" className="error">{error}</p>}
         {output !== null && <div className="output"><span>{task ? `Task ${task.id} · ${task.state}` : 'Local execution completed'}</span><pre>{output}</pre></div>}
       </section>
+      <StudioWorkspace />
       <section className="roadmap">
         <div><BrainCircuit /><strong>Agentic kernel</strong><span>Next: durable tasks and supervision</span></div>
         <div><Workflow /><strong>Execution fabric</strong><span>Next: workflows and recovery</span></div>

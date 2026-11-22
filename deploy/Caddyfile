@@ -1,0 +1,16 @@
+# Hardened-by-default: only a health check is public.
+# DO NOT proxy /v1 or /experimental to the public internet
+# until proper authentication, authorization and rate limiting exist.
+api.xfree.in {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+    handle /health {
+        reverse_proxy api:8080
+    }
+    handle {
+        respond "Agent API is not enabled for public access" 403
+    }
+}

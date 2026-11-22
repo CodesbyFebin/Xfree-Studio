@@ -36,11 +36,43 @@ pub fn plan(goal: &str) -> Result<ExecutionPlan, &'static str> {
         goal: goal.into(),
         status: "proposed_not_executed".into(),
         steps: vec![
-            PlanStep { id: 1, role: Role::Supervisor, instruction: "Validate task scope and required permissions".into(), depends_on: vec![], requires_approval: false },
-            PlanStep { id: 2, role: Role::Planner, instruction: format!("Produce requirements, architecture and acceptance criteria for: {goal}"), depends_on: vec![1], requires_approval: false },
-            PlanStep { id: 3, role: Role::Coder, instruction: "Propose a patch in an isolated workspace".into(), depends_on: vec![2], requires_approval: true },
-            PlanStep { id: 4, role: Role::Tester, instruction: "Execute permitted tests in a sandbox".into(), depends_on: vec![3], requires_approval: true },
-            PlanStep { id: 5, role: Role::Reviewer, instruction: "Review changes and evidence before deployment".into(), depends_on: vec![4], requires_approval: true },
+            PlanStep {
+                id: 1,
+                role: Role::Supervisor,
+                instruction: "Validate task scope and required permissions".into(),
+                depends_on: vec![],
+                requires_approval: false,
+            },
+            PlanStep {
+                id: 2,
+                role: Role::Planner,
+                instruction: format!(
+                    "Produce requirements, architecture and acceptance criteria for: {goal}"
+                ),
+                depends_on: vec![1],
+                requires_approval: false,
+            },
+            PlanStep {
+                id: 3,
+                role: Role::Coder,
+                instruction: "Propose a patch in an isolated workspace".into(),
+                depends_on: vec![2],
+                requires_approval: true,
+            },
+            PlanStep {
+                id: 4,
+                role: Role::Tester,
+                instruction: "Execute permitted tests in a sandbox".into(),
+                depends_on: vec![3],
+                requires_approval: true,
+            },
+            PlanStep {
+                id: 5,
+                role: Role::Reviewer,
+                instruction: "Review changes and evidence before deployment".into(),
+                depends_on: vec![4],
+                requires_approval: true,
+            },
         ],
     })
 }

@@ -42,3 +42,8 @@ Design source: the Xfree Studio Ω blueprint and Hostinger deployment notes. Exi
 ## Security note
 
 Use development-only interfaces until production gates pass. Never store provider API keys in `VITE_*` variables.
+
+
+## v1 workspace preview branch
+
+The `feat/v1-agentic-workspace` branch introduces local spec-driven scaffolding, editable files, browser preview and a Rust deterministic multi-agent planning crate. These are incremental foundations, **not** a complete AI coding agent or interoperable A2A/MCP implementation. See [v1 implementation plan](docs/V1-IMPLEMENTATION.md).

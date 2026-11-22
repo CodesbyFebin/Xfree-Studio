@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { User } from 'firebase/auth';
+import { firebaseEnabled, watchUser, login, logout, uploadProject, downloadProjects } from './firebase';
 import { ArrowRight, Code2, Download, FileCode2, FolderOpen, Play, Save, Sparkles, Workflow } from 'lucide-react';
 import { exportProject, generateProject, generateSpec, listProjects, previewHtml, saveProject, type StudioProject } from './studio';
 
@@ -8,6 +10,14 @@ export function StudioWorkspace() {
   const [file, setFile] = useState('index.html');
   const [tab, setTab] = useState<'code' | 'spec' | 'preview'>('code');
   const [message, setMessage] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => watchUser(setUser), []);
+  async function cloudAction(action: () => Promise<void>) {
+    setBusy(true);
+    try { await action(); } catch (e) { setMessage(e instanceof Error ? e.message : 'Cloud action failed'); }
+    finally { setBusy(false); }
+  }
   const selected = project?.files.find(x => x.path === file);
   const spec = useMemo(() => { try { return generateSpec(prompt); } catch { return null; } }, [prompt]);
   function generate() {
@@ -27,7 +37,7 @@ export function StudioWorkspace() {
   }
   return <section className="studio-shell" aria-label="AI development workspace">
     <div className="studio-heading"><div><div className="eyebrow">XFREESTUDIO / BUILDER</div><h2>Agentic <em>Workspace.</em></h2><p>Specification-driven starter generation, editable project files and a sandboxed preview. No cloud upload.</p></div><span className="studio-pill">LOCAL · V1 PREVIEW</span></div>
-    <div className="prompt-bar"><label htmlFor="studio-prompt">Describe your application</label><div className="prompt-controls"><input id="studio-prompt" value={prompt} maxLength={1200} onChange={e => setPrompt(e.target.value)} placeholder="Describe the app to scaffold..." /><button type="button" onClick={generate}><Sparkles size={17}/> Generate starter</button></div><small>Template-based scaffolding, not LLM-generated production code.</small></div>
+    <div className="prompt-bar"><div className="cloud-controls"><strong>Firebase Cloud Projects · Optional</strong><span>{!firebaseEnabled ? 'Not configured — local only' : user ? 'Signed in: ' + (user.email || 'Google account') : 'Sign in to sync'}</span>{firebaseEnabled && <button type="button" disabled={busy} onClick={() => cloudAction(user ? logout : login)}>{user ? 'Sign out' : 'Sign in with Google'}</button>}{user && <><button type="button" disabled={busy || !project} onClick={() => cloudAction(async () => { if (project) { await uploadProject(user, project); setMessage('Saved privately to Firestore.'); } })}>Save to cloud</button><button type="button" disabled={busy} onClick={() => cloudAction(async () => { const items = await downloadProjects(user); if (items[0]) { setProject(items[0]); setFile('index.html'); setMessage('Latest cloud project loaded.'); } else setMessage('No cloud projects yet.'); })}>Load latest</button></>}</div><label htmlFor="studio-prompt">Describe your application</label><div className="prompt-controls"><input id="studio-prompt" value={prompt} maxLength={1200} onChange={e => setPrompt(e.target.value)} placeholder="Describe the app to scaffold..." /><button type="button" onClick={generate}><Sparkles size={17}/> Generate starter</button></div><small>Template-based scaffolding, not LLM-generated production code.</small></div>
     <div className="workspace-grid">
       <aside className="workspace-sidebar"><strong><FolderOpen size={17}/> Project files</strong>{project ? project.files.map(f => <button type="button" key={f.path} className={'file-item ' + (file === f.path ? 'active' : '')} onClick={() => { setFile(f.path); setTab('code'); }}><FileCode2 size={15}/>{f.path}</button>) : <p>Create a starter to begin.</p>}
       <div className="workspace-actions"><button type="button" disabled={!project} onClick={save}><Save size={15}/> Save</button><button type="button" disabled={!project} onClick={() => project && exportProject(project)}><Download size={15}/> Export JSON</button></div></aside>

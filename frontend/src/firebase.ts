@@ -1,10 +1,19 @@
 import { initializeApp, getApps } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult, type User } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDocs, collection, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import type { StudioProject } from './studio';
 const config = {apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID};
 export const firebaseEnabled = Object.values(config).every(v => typeof v === 'string' && v.length > 0);
 const app = firebaseEnabled ? getApps()[0] || initializeApp(config) : null;
+// Configure a production reCAPTCHA v3 site key in the Firebase App Check console.
+// Do not activate App Check without a registered key: it would break cloud requests.
+const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY;
+if (app && appCheckSiteKey && typeof window !== 'undefined') {
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckSiteKey), isTokenAutoRefreshEnabled: true });
+}
+export const firebaseApp = app;
+export const appCheckConfigured = Boolean(app && appCheckSiteKey);
 const auth = app ? getAuth(app) : null;
 const db = app ? getFirestore(app) : null;
 export function watchUser(cb:(u:User|null)=>void):()=>void { if (!auth) { cb(null); return ()=>{}; } return onAuthStateChanged(auth,cb); }

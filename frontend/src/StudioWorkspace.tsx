@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { User, ConfirmationResult } from 'firebase/auth';
 import { firebaseEnabled, watchUser, login, logout, emailLogin, sendPhoneCode, uploadProject, downloadProjects } from './firebase';
+import { auditProjectWithHybridAI, hybridReady, type HybridMode, type HybridResult } from './hybridAI';
 import { ArrowRight, Code2, Download, FileCode2, FolderOpen, Play, Save, Sparkles, Workflow } from 'lucide-react';
 import { exportProject, generateProject, generateSpec, listProjects, previewHtml, saveProject, type StudioProject } from './studio';
 
@@ -17,6 +18,10 @@ export function StudioWorkspace() {
   const [phone, setPhone] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [hybridMode, setHybridMode] = useState<HybridMode>('prefer_on_device');
+  const [hybridResult, setHybridResult] = useState<HybridResult | null>(null);
+  const [hybridBusy, setHybridBusy] = useState(false);
+  const [allowCloudFallback, setAllowCloudFallback] = useState(false);
   useEffect(() => watchUser(setUser), []);
   async function cloudAction(action: () => Promise<void>) {
     setBusy(true);
@@ -31,6 +36,14 @@ export function StudioWorkspace() {
       setProject(next); setFile('index.html'); setTab('code'); setMessage('Starter created locally. Review and edit the generated files.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Generation failed'); }
   }
+  async function runHybridAudit() {
+    if (!selected || !project) return;
+    if (hybridMode !== 'only_on_device' && !allowCloudFallback) { setMessage('Enable cloud data sharing consent, or choose on-device only.'); return; }
+    setHybridBusy(true); setHybridResult(null);
+    try { const result = await auditProjectWithHybridAI(project.prompt, selected.path, selected.content, hybridMode); setHybridResult(result); setMessage('AI review complete. Source: ' + result.source + '. Review suggestions before editing.'); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'Hybrid inference failed'); }
+    finally { setHybridBusy(false); }
+  }
   function edit(content: string) {
     if (!project) return;
     setProject({ ...project, files: project.files.map(f => f.path === file ? { ...f, content } : f) });
@@ -43,6 +56,19 @@ export function StudioWorkspace() {
   return <section className="studio-shell" aria-label="AI development workspace">
     <div className="studio-heading"><div><div className="eyebrow">XFREESTUDIO / BUILDER</div><h2>Agentic <em>Workspace.</em></h2><p>Specification-driven starter generation, editable project files and a sandboxed preview. No cloud upload.</p></div><span className="studio-pill">LOCAL · V1 PREVIEW</span></div>
     <div className="prompt-bar"><div className="cloud-controls"><strong>Firebase Cloud Projects · Optional</strong><span>{!firebaseEnabled ? 'Not configured — local only' : user ? 'Signed in: ' + (user.email || 'Google account') : 'Sign in to sync'}</span>{firebaseEnabled && <button type="button" disabled={busy} onClick={() => cloudAction(user ? logout : login)}>{user ? 'Sign out' : 'Sign in with Google'}</button>}{firebaseEnabled && !user && <div className="firebase-auth-options"><label>Email<input aria-label="Firebase email" type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input aria-label="Firebase password" type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button type="button" disabled={busy || !email || password.length < 6} onClick={()=>cloudAction(()=>emailLogin(email,password))}>Email sign in</button><button type="button" disabled={busy || !email || password.length < 6} onClick={()=>cloudAction(()=>emailLogin(email,password,true))}>Create account</button><label>Phone (E.164)<input aria-label="Phone number" type="tel" placeholder="+919876543210" value={phone} onChange={e=>setPhone(e.target.value)}/></label><div id="firebase-phone-recaptcha"/><button type="button" disabled={busy || !/^\\+[1-9]\\d{7,14}$/.test(phone)} onClick={()=>cloudAction(async()=>{setConfirmation(await sendPhoneCode(phone,'firebase-phone-recaptcha'));setMessage('Verification code sent if the phone number is eligible.');})}>Send SMS code</button>{confirmation && <><label>SMS code<input aria-label="SMS verification code" inputMode="numeric" value={smsCode} onChange={e=>setSmsCode(e.target.value)}/></label><button type="button" disabled={busy || !smsCode} onClick={()=>cloudAction(async()=>{await confirmation.confirm(smsCode);setConfirmation(null);setSmsCode('');})}>Verify phone</button></>}</div>}{user && <><button type="button" disabled={busy || !project} onClick={() => cloudAction(async () => { if (project) { await uploadProject(user, project); setMessage('Saved privately to Firestore.'); } })}>Save to cloud</button><button type="button" disabled={busy} onClick={() => cloudAction(async () => { const items = await downloadProjects(user); if (items[0]) { setProject(items[0]); setFile('index.html'); setMessage('Latest cloud project loaded.'); } else setMessage('No cloud projects yet.'); })}>Load latest</button></>}</div><label htmlFor="studio-prompt">Describe your application</label><div className="prompt-controls"><input id="studio-prompt" value={prompt} maxLength={1200} onChange={e => setPrompt(e.target.value)} placeholder="Describe the app to scaffold..." /><button type="button" onClick={generate}><Sparkles size={17}/> Generate starter</button></div><small>Template-based scaffolding, not LLM-generated production code.</small></div>
+    <div className="hybrid-panel" aria-label="Hybrid AI code review">
+      <div className="hybrid-panel-head"><div><strong>Hybrid AI Code Review</strong><p>Distinctive workflow: inspect your actual editable source, review a suggested change, and keep control of every edit.</p></div><span className="studio-pill">{hybridReady ? 'SDK READY' : 'SETUP REQUIRED'}</span></div>
+      <label htmlFor="hybrid-mode">Inference preference</label>
+      <select id="hybrid-mode" value={hybridMode} onChange={e=>{setHybridMode(e.target.value as HybridMode);setHybridResult(null);}}>
+        <option value="prefer_on_device">Prefer on-device · automatic cloud fallback</option>
+        <option value="only_on_device">On-device only · never send source to cloud</option>
+        <option value="only_in_cloud">Cloud only · Firebase AI Logic</option>
+      </select>
+      {hybridMode !== 'only_on_device' && <label className="hybrid-consent"><input type="checkbox" checked={allowCloudFallback} onChange={e=>setAllowCloudFallback(e.target.checked)}/> I understand this may send the selected file and project description to Gemini in the cloud if cloud inference is used.</label>}
+      <div className="hybrid-panel-actions"><button type="button" disabled={!hybridReady || !selected || hybridBusy || (hybridMode !== 'only_on_device' && !allowCloudFallback)} onClick={runHybridAudit}><Sparkles size={16}/>{hybridBusy ? 'Reviewing…' : 'Review selected file with AI'}</button><small>Only the selected file (max 12,000 characters). No automatic code edits. On-device support requires compatible desktop Chrome and model download.</small></div>
+      {hybridResult && <div className="hybrid-output" aria-live="polite"><div className="hybrid-provenance"><strong>Inference: {hybridResult.source === 'ON_DEVICE' ? 'On device' : hybridResult.source === 'IN_CLOUD' ? 'Cloud fallback' : 'Source not reported'}</strong><span>{hybridResult.elapsedMs} ms · suggestions only</span></div><pre>{hybridResult.text}</pre></div>}
+      {!hybridReady && <small>Register Firebase AI Logic and App Check in project xfree-studio, then set VITE_FIREBASE_* and VITE_FIREBASE_APPCHECK_SITE_KEY. This panel never fakes a model response.</small>}
+    </div>
     <div className="workspace-grid">
       <aside className="workspace-sidebar"><strong><FolderOpen size={17}/> Project files</strong>{project ? project.files.map(f => <button type="button" key={f.path} className={'file-item ' + (file === f.path ? 'active' : '')} onClick={() => { setFile(f.path); setTab('code'); }}><FileCode2 size={15}/>{f.path}</button>) : <p>Create a starter to begin.</p>}
       <div className="workspace-actions"><button type="button" disabled={!project} onClick={save}><Save size={15}/> Save</button><button type="button" disabled={!project} onClick={() => project && exportProject(project)}><Download size={15}/> Export JSON</button></div></aside>

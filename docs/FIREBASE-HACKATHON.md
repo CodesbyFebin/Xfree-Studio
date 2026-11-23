@@ -1,12 +1,12 @@
-# Xfree Studio Firebase Hackathon Integration
-Google login and opt-in Firestore project sync are implemented in the frontend. Local projects work without Firebase. The Rust agent API remains a development-only, unauthenticated deterministic-tools API: **do not expose it publicly**. No real AI agent execution, secure sandbox, production A2A/MCP or Firebase-authenticated Rust endpoints are claimed.
+# #BuildHybridAI 2026 — Xfree Studio
 
-## Setup
-1. Create Firebase project and web app in Firebase Console. Enable Google sign-in and Cloud Firestore.
-2. Add app.xfree.in to Firebase Authentication authorized domains.
-3. Copy frontend/.env.firebase.example to frontend/.env.local and populate the four Firebase web configuration values.
-4. Run `firebase deploy --only firestore:rules,firestore:indexes --project YOUR_PROJECT_ID`.
-5. Run `cd frontend && npm install && npm run build`, upload dist/ to Hostinger static site.
-6. Verify that user A cannot read or modify user B's projects, and anonymous access is denied. Run Firebase Emulator Suite for rule tests.
+Xfree Studio is a Web/Chrome idea-to-build-brief experience. Firebase AI Logic uses `PREFER_ON_DEVICE` so supported Chrome desktop devices can run Gemini Nano locally, with the Firebase cloud model as a fallback. The UI also exposes device-only and cloud-only modes and shows the response's actual `inferenceSource`.
 
-Firebase web config is public, not a server secret. Never commit service-account credentials. Cloud sync is explicitly opt-in, not 100% local or end-to-end encrypted. Firebase account and deployment credentials must be configured by the owner.
+## Before recording the demo
+
+1. Follow [Firebase setup](FIREBASE-SETUP.md) to register the web app, provision Firebase AI Logic, configure App Check, and enable the desired Auth/Firestore services.
+2. Use desktop Chrome 139+ with the Prompt API available. Prepare the local model before recording the on-device response.
+3. Use Hybrid mode in a second environment without a local model and confirm the cloud fallback badge appears.
+4. Follow the [submission draft and demo outline](HACKATHON-SUBMISSION.md). The hackathon requires a public repository with an open-source license, a hosted demo URL, and an English public YouTube demo video no longer than three minutes.
+
+The Rust agent API remains a separate development-only surface and is not used by this AI Logic feature. Do not expose it to untrusted users.

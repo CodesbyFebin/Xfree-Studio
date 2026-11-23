@@ -33,10 +33,10 @@ export async function auditProjectWithHybridAI(
   ].join('\n');
   const started = performance.now();
   const result = await model.generateContent(instruction);
-  const source = result.response.inferenceSource;
+  const source = String(result.response.inferenceSource ?? 'UNKNOWN');
   return {
     text: result.response.text(),
-    source: source === 'ON_DEVICE' || source === 'IN_CLOUD' ? source : 'UNKNOWN',
+    source: /^(ON_DEVICE|onDevice|on_device)$/i.test(source) ? 'ON_DEVICE' : /^(IN_CLOUD|inCloud|in_cloud)$/i.test(source) ? 'IN_CLOUD' : 'UNKNOWN',
     elapsedMs: Math.round(performance.now() - started)
   };
 }

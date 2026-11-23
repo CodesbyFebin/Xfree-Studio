@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { ArrowRight, Bell, BrainCircuit, Check, Cloud, Code2, FileText, Folder, Globe, Grid2X2, Keyboard, Link2, Menu, Mic, Paperclip, PenLine, Settings, ShieldCheck, Sparkles, Volume2, WandSparkles, X, Zap } from 'lucide-react';
 import { StudioWorkspace } from './StudioWorkspace';
 import './style.css';
+import { Landing } from './Landing';
+import './landing.css';
 
 type Tab = 'Command' | 'Files' | 'Tools' | 'AI' | 'Projects';
 type Mode = 'Local' | 'Cloud';
@@ -99,4 +101,20 @@ function App() {
     <footer className="footer"><div className="footer-brand"><i>X</i>Free</div><div><strong>ROOT ACCESS FOR EVERYONE</strong><small>SIMPLE TOOLS. REAL FREEDOM.</small></div><span><span className="online-dot"/> v1.0.0 UI</span></footer>
   </div>;
 }
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
+function Root() {
+  const [path, setPath] = useState(window.location.pathname);
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  function navigate(next: string) {
+    window.history.pushState({}, '', next);
+    setPath(next);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+  return path.replace(/\/+$/, '') === '/studio'
+    ? <div><button className="back-to-xfree" onClick={() => navigate('/')}>← XFree Home</button><App /></div>
+    : <Landing openStudio={() => navigate('/studio')} />;
+}
+createRoot(document.getElementById('root')!).render(<React.StrictMode><Root/></React.StrictMode>);

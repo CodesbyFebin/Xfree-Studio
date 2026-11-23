@@ -9,7 +9,9 @@ service cloud.firestore {
      && p.keys().hasAll(['name','prompt','files','createdAt','version','ownerId','updatedAt'])
      && p.ownerId==userId && p.name is string && p.name.size()>0 && p.name.size()<=40
      && p.name==projectId && p.prompt is string && p.prompt.size()<=1200
-     && p.createdAt is string && p.version==1 && p.files is list && p.files.size()<=30
+     && p.createdAt is string && p.createdAt.size()<=40
+     && p.updatedAt is string && p.updatedAt.size()<=40
+     && p.version==1 && p.files is list && p.files.size()<=30
     ;
    }
    allow get,list: if owner();

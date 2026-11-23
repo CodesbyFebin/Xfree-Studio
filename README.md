@@ -1,8 +1,8 @@
-# Xfree Studio Ω
+# Xfree Studio
 
-Rust-first agentic platform foundation for desktop, web and future A2A/MCP interoperability.
+Turn a rough software idea into a focused build brief, then scaffold, edit, and preview a starter project. The assistant uses Firebase AI Logic hybrid inference: on-device Gemini Nano when available, cloud fallback when needed.
 
-> **Status:** v0.1 development foundation. Not production-safe or certified A2A/MCP compliant. The public frontend is intended for Hostinger Web/Business/Cloud hosting; the Rust backend requires a separate container host/VPS.
+> **Status:** Hackathon prototype. The AI demo requires Firebase AI Logic and App Check configuration. The separate Rust API is development-only and is not used by the AI feature. The frontend can be hosted as a static site; the Rust backend requires a separate container host/VPS.
 
 ## Architecture
 
@@ -10,6 +10,12 @@ Rust-first agentic platform foundation for desktop, web and future A2A/MCP inter
 - `backend/` — Rust workspace: Axum API, agent-task core, policy guard and deterministic tools
 - `deploy/` — container-host configuration for `api.xfree.in`, Caddy TLS
 - `docs/` — hosting architecture and implementation roadmap
+
+## #BuildHybridAI 2026
+
+Xfree Studio turns a short product idea into an MVP build brief. The web app uses Firebase AI Logic hybrid inference: it prefers Chrome's on-device Gemini Nano model, can be pinned to on-device-only or cloud-only, and reports the actual inference source for every response. App Check protects AI Logic requests; Firebase Auth and owner-only Firestore project sync remain optional.
+
+Web on-device inference requires Firebase JS SDK 12.5.0+ and desktop Chrome 139+. The first local request may require enabling Chrome's Prompt API and downloading the model. Configure the Firebase project before expecting runtime AI responses. See [Firebase setup](docs/FIREBASE-SETUP.md) and the [Devpost submission/demo draft](docs/HACKATHON-SUBMISSION.md).
 
 ## Local development
 

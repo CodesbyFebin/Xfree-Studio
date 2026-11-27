@@ -38,6 +38,7 @@ if (firebaseApp && auth && db && import.meta.env.DEV && import.meta.env.VITE_USE
 
 const MAX_PROJECT_BYTES = 450_000;
 const MAX_FILE_PATH_LENGTH = 200;
+const MAX_PROJECT_FILES = 10;
 
 export function watchUser(callback: (user: User | null) => void): () => void {
   if (!auth) {
@@ -89,7 +90,7 @@ function validateProject(project: StudioProject): void {
     Number.isNaN(Date.parse(project.createdAt)) ||
     project.version !== 1 ||
     !Array.isArray(project.files) ||
-    project.files.length > 30 ||
+    project.files.length > MAX_PROJECT_FILES ||
     project.files.some((file) =>
       !file ||
       typeof file.path !== 'string' ||
@@ -97,6 +98,7 @@ function validateProject(project: StudioProject): void {
       file.path.length > MAX_FILE_PATH_LENGTH ||
       file.path.startsWith('/') ||
       file.path.includes('\\') ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]*([/][A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) ||
       file.path.split('/').some((part) => !part || part === '.' || part === '..') ||
       typeof file.content !== 'string',
     )
@@ -137,7 +139,7 @@ function isProject(value: unknown): value is StudioProject & { updatedAt: string
     typeof project.ownerId !== 'string' ||
     project.version !== 1 ||
     !Array.isArray(project.files) ||
-    project.files.length > 30
+    project.files.length > MAX_PROJECT_FILES
   ) return false;
 
   return project.files.every((file) =>
@@ -147,6 +149,7 @@ function isProject(value: unknown): value is StudioProject & { updatedAt: string
     file.path.length <= MAX_FILE_PATH_LENGTH &&
     !file.path.startsWith('/') &&
     !file.path.includes('\\') &&
+    /^[A-Za-z0-9][A-Za-z0-9._-]*([/][A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) &&
     !file.path.split('/').some((part) => !part || part === '.' || part === '..') &&
     typeof file.content === 'string',
   );

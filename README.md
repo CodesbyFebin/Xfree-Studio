@@ -53,3 +53,8 @@ Use development-only interfaces until production gates pass. Never store provide
 ## v1 workspace preview branch
 
 The `feat/v1-agentic-workspace` branch introduces local spec-driven scaffolding, editable files, browser preview and a Rust deterministic multi-agent planning crate. These are incremental foundations, **not** a complete AI coding agent or interoperable A2A/MCP implementation. See [v1 implementation plan](docs/V1-IMPLEMENTATION.md).
+
+
+Cloud project sync accepts up to 10 files with safe relative paths; the current starter template creates five. Firestore rules enforce the same file and content constraints and keep the project's creation timestamp stable.
+
+The development API stores at most 1,000 tasks in memory and rejects new tasks when full; restarting clears the store. It still has no authentication or rate limiting. Do not expose it to untrusted users until the production safeguards listed above are implemented.

@@ -2,9 +2,9 @@
 
 The existing React/Vite frontend is retained. The Firebase dependency declares ^12.5.0; installed version and real hardware availability must be checked before demo. See [Firebase web hybrid setup](https://firebase.google.com/docs/ai-logic/hybrid/web/get-started).
 
-Inputs default to LOCAL_ONLY. Explicit PUBLIC consent permits hybrid inference; heuristic detection can restrict it again. INTERNAL and TAINTED are denied cloud access. The fixed Workflow Lab pipeline uses the join helper to propagate restrictions. An editable DAG is not implemented. Private inference uses ONLY_ON_DEVICE and never retries in cloud. Hybrid public tasks choose preferred device/cloud using a heuristic. Trace source is read from the SDK response, not inferred from the requested mode.
+Inputs default to LOCAL_ONLY. Explicit PUBLIC consent permits hybrid inference; heuristic detection can restrict it again. INTERNAL and TAINTED are denied cloud access. The Workflow Lab executes an editable JSON dependency graph with topological ordering, cycle rejection and label joins. A drag-and-drop canvas is not implemented. Private inference uses ONLY_ON_DEVICE and never retries in cloud. Hybrid public tasks choose preferred device/cloud using a heuristic. Trace source is read from the SDK response, not inferred from the requested mode.
 
-Scope: the build-brief inference path only. This is not a system-wide IFC guarantee. Browser extensions, other app surfaces, storage, telemetry and SDK behavior require separate review. The Workflow Lab includes a public-only IndexedDB queue and deterministic local word-count tool. Recovery is at-least-once and only automatically triggered while the lab is mounted; recovered jobs run inference only. No declassification, editable workflow canvas, model-generated tool calls, private retry queue, grounding freshness contract or external fallback is implemented.
+Scope: the build-brief inference path only. This is not a system-wide IFC guarantee. Browser extensions, other app surfaces, storage, telemetry and SDK behavior require separate review. The Workflow Lab includes a public-only IndexedDB queue and deterministic local word-count tool. Recovery is at-least-once and only automatically triggered while the lab is mounted; recovered jobs run inference only. No declassification, visual drag-and-drop canvas, model-generated tool calls, private retry queue or external fallback is implemented. Freshness reports UNKNOWN because no external grounding source is configured. The freshness helper is tested against timestamps.
 
 ## Acceptance checks (not yet executed)
 
@@ -24,3 +24,7 @@ Scope: the build-brief inference path only. This is not a system-wide IFC guaran
 - Verify restricted input never enters queue.
 - Verify word-count receipt matches actual output.
 - Test multiple tabs and interrupted recovery before claiming reliable exactly-once behavior.
+
+## Regression suite
+
+Run `cd frontend && npm test` on Node 22.13+ and `npm run build`. Tests cover routing, taint, graph ordering, invalid tools and freshness. The suite has not yet been executed in the target environment. Offline recovery remains inference-only and does not resume the full graph.

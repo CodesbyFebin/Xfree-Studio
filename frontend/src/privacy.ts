@@ -8,7 +8,7 @@ export function join(labels: readonly PrivacyLabel[]): PrivacyLabel {
 export function route(input: string, label: PrivacyLabel, choice: 'Hybrid' | 'On-device' | 'Cloud'): RoutingTrace {
   // Detection can only promote restrictions; INTERNAL has no declassification path in this MVP.
   const detected = /LOCAL_ONLY|\b\d{3}-\d{2}-\d{4}\b|password\s*[:=]|api[_ -]?key\s*[:=]|-----BEGIN .*PRIVATE KEY-----/i.test(input);
-  const effective = detected || choice === 'On-device' ? 'LOCAL_ONLY' : label;
+  const effective = label === 'TAINTED' ? 'TAINTED' : detected || choice === 'On-device' ? 'LOCAL_ONLY' : label;
   const cloudAllowed = effective === 'PUBLIC';
   const complexity = /\b(search|compare|research|find|tool)\b|\band then\b/i.test(input) || input.length > 800 ? 'MULTI_STEP' : 'DIRECT';
   return { label: effective, cloudAllowed, complexity, mode: !cloudAllowed ? 'ONLY_ON_DEVICE' : choice === 'Cloud' ? 'ONLY_IN_CLOUD' : complexity === 'MULTI_STEP' ? 'PREFER_IN_CLOUD' : 'PREFER_ON_DEVICE' };

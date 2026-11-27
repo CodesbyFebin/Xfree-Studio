@@ -2,9 +2,9 @@
 
 The existing React/Vite frontend is retained. The Firebase dependency declares ^12.5.0; installed version and real hardware availability must be checked before demo. See [Firebase web hybrid setup](https://firebase.google.com/docs/ai-logic/hybrid/web/get-started).
 
-Inputs default to LOCAL_ONLY. Explicit PUBLIC consent permits hybrid inference; heuristic detection can restrict it again. INTERNAL and TAINTED are denied cloud access. The join helper propagates restrictions but is not yet wired to a DAG. Private inference uses ONLY_ON_DEVICE and never retries in cloud. Hybrid public tasks choose preferred device/cloud using a heuristic. Trace source is read from the SDK response, not inferred from the requested mode.
+Inputs default to LOCAL_ONLY. Explicit PUBLIC consent permits hybrid inference; heuristic detection can restrict it again. INTERNAL and TAINTED are denied cloud access. The fixed Workflow Lab pipeline uses the join helper to propagate restrictions. An editable DAG is not implemented. Private inference uses ONLY_ON_DEVICE and never retries in cloud. Hybrid public tasks choose preferred device/cloud using a heuristic. Trace source is read from the SDK response, not inferred from the requested mode.
 
-Scope: the build-brief inference path only. This is not a system-wide IFC guarantee. Browser extensions, other app surfaces, storage, telemetry and SDK behavior require separate review. No declassification, offline queue, tool execution, workflow canvas or external fallback is implemented here.
+Scope: the build-brief inference path only. This is not a system-wide IFC guarantee. Browser extensions, other app surfaces, storage, telemetry and SDK behavior require separate review. The Workflow Lab includes a public-only IndexedDB queue and deterministic local word-count tool. Recovery is at-least-once and only automatically triggered while the lab is mounted; recovered jobs run inference only. No declassification, editable workflow canvas, model-generated tool calls, private retry queue, grounding freshness contract or external fallback is implemented.
 
 ## Acceptance checks (not yet executed)
 
@@ -15,3 +15,12 @@ Scope: the build-brief inference path only. This is not a system-wide IFC guaran
 - PUBLIC input containing fake SSN: local-only override.
 - Private input must not populate the project workspace.
 - Confirm configured cloud model is available in Firebase project.
+
+## Workflow Lab checks (not yet executed)
+
+- Open AI or Automation tab; run private and public inputs.
+- Disconnect before running a public multi-step input; verify queue persists after reload.
+- Reconnect with lab mounted; verify actual cloud response and queue removal.
+- Verify restricted input never enters queue.
+- Verify word-count receipt matches actual output.
+- Test multiple tabs and interrupted recovery before claiming reliable exactly-once behavior.

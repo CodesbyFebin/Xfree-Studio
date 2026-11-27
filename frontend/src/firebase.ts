@@ -98,7 +98,7 @@ function validateProject(project: StudioProject): void {
       file.path.length > MAX_FILE_PATH_LENGTH ||
       file.path.startsWith('/') ||
       file.path.includes('\\') ||
-      !/^[A-Za-z0-9][A-Za-z0-9._-]*([/][A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) ||
       file.path.split('/').some((part) => !part || part === '.' || part === '..') ||
       typeof file.content !== 'string',
     )
@@ -149,7 +149,7 @@ function isProject(value: unknown): value is StudioProject & { updatedAt: string
     file.path.length <= MAX_FILE_PATH_LENGTH &&
     !file.path.startsWith('/') &&
     !file.path.includes('\\') &&
-    /^[A-Za-z0-9][A-Za-z0-9._-]*([/][A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) &&
+    /^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) &&
     !file.path.split('/').some((part) => !part || part === '.' || part === '..') &&
     typeof file.content === 'string',
   );

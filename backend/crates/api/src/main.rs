@@ -93,7 +93,9 @@ async fn create_task(
     if tasks.len() >= MAX_IN_MEMORY_TASKS {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
-            Json(json!({"error":"task_store_full","message":"The development task store is full; restart the service to clear it."})),
+            Json(
+                json!({"error":"task_store_full","message":"The development task store is full; restart the service to clear it."}),
+            ),
         ));
     }
     tasks.insert(task.id, task.clone());

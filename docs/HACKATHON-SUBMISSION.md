@@ -4,6 +4,8 @@
 
 **Xfree Studio — Idea to Build Brief**
 
+**Platform:** Web (Chrome)
+
 ## One-line pitch
 
 Turn a rough product idea into a focused first-release plan, with Firebase AI Logic choosing Gemini Nano on supported Chrome devices and falling back to cloud when needed.
@@ -15,6 +17,8 @@ Most people with a useful software idea get stuck before the first commit: the a
 The brief is powered by Firebase AI Logic hybrid inference. In Hybrid mode, Xfree prefers Chrome's on-device Gemini Nano model and uses the Firebase cloud model when the local model is unavailable. Device-only mode keeps the prompt local; Cloud-only mode makes the trade-off explicit. Each response shows which inference path actually ran. Firebase App Check protects the AI Logic calls, while optional Firebase Authentication and Cloud Firestore sync user-owned project work.
 
 Xfree Studio is for indie builders, students, and small teams who need to turn an idea into a testable first release without sending every prompt to the cloud by default.
+
+The cloud model is Gemini 3.8 Flash. Both inference modes produce build briefs. The starter workspace uses local templates to create editable HTML, CSS, JavaScript, and a specification, with an in-browser preview and optional owner-only Firestore sync.
 
 ## What changed during the hackathon
 
@@ -33,10 +37,10 @@ Show the short idea input: “A study planner for students who keep losing track
 On a supported Chrome desktop, choose Hybrid and prepare Gemini Nano. Explain that the model downloads once and stays on the device.
 
 **0:45–1:20 — Local result**  
-Send the idea. Show the actual `GEMINI NANO · ON DEVICE` badge and the generated user, problem, MVP, build sequence, and risks. Point out that the result reports the SDK's inference source, rather than guessing based on the selected mode.
+With the app loaded and Gemini Nano ready, turn off Wi-Fi, select Device, and send the idea. Show the actual `GEMINI NANO · ON DEVICE` badge and the generated user, problem, MVP, build sequence, and risks. Point out that the result reports the SDK's inference source, rather than guessing based on the selected mode.
 
 **1:20–1:50 — Explicit cloud choice**  
-Choose Cloud and send the same idea. Show the cloud source badge and explain that this mode is explicit; Hybrid instead prefers the local model.
+Restore Wi-Fi, choose Cloud, and send the same idea. Show the cloud source badge and explain that this mode is explicit; Hybrid instead prefers the local model.
 
 **1:50–2:20 — Real fallback**  
 Open the app in a second browser environment without an available on-device model, leave Hybrid selected, and send a short idea. Show that the SDK completes the request through cloud fallback. Keep the two environments visible in the recording or use a clean edit between them.
@@ -55,7 +59,7 @@ Restate the value: a clear first step for a builder, with a visible choice about
 - [ ] Verify optional Auth and Firestore sync with two accounts and confirm cross-user access is denied.
 - [ ] Run the production build and exercise the complete demo in the deployed web app.
 - [ ] Confirm the public GitHub repository shows the Apache-2.0 license in its About panel.
-- [ ] Upload an English YouTube demo video no longer than three minutes and link it in the Devpost entry.
+- [ ] Upload a Public YouTube demo with English audio or subtitles, no longer than three minutes, and link it in the Devpost entry.
 - [ ] Include the public repository and hosted demo URL in the Devpost submission.
 
 Do not submit claims about on-device execution until the response badge has been observed on a supported device. On-device inference for the web requires Firebase JS SDK 12.5.0+ and desktop Chrome 139+; Chrome may need its Prompt API enabled and the Gemini Nano model downloaded.

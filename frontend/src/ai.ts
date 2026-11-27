@@ -9,7 +9,8 @@ import { firebaseAppCheckReady } from './firebaseConfig';
 
 export type AIChoice = 'Hybrid' | 'On-device' | 'Cloud';
 export type InferenceSource = 'on_device' | 'in_cloud';
-export type BuildBrief = { text: string; source: InferenceSource };
+export type BuildBrief = { text: string; source: InferenceSource; trace: RoutingTrace };
+import { route, type RoutingTrace, type PrivacyLabel } from './privacy';
 
 const ai = firebaseApp && firebaseAppCheckReady
   ? getAI(firebaseApp, {
@@ -26,10 +27,10 @@ const modeByChoice = {
   Cloud: InferenceMode.ONLY_IN_CLOUD,
 } as const;
 
-function createModel(choice: AIChoice) {
+function createModel(choice: AIChoice, cloudPreferred = false) {
   if (!ai) throw new Error('Add the Firebase web config and App Check site key to enable AI.');
   return getGenerativeModel(ai, {
-    mode: modeByChoice[choice],
+    mode: cloudPreferred ? InferenceMode.PREFER_IN_CLOUD : modeByChoice[choice],
     inCloudParams: {
       model: 'gemini-3.8-flash',
       generationConfig: { maxOutputTokens: 700, temperature: 0.45 },
@@ -58,12 +59,18 @@ export async function generateBuildBrief(
   idea: string,
   choice: AIChoice,
   onModelProgress?: (progress: number) => void,
+  label: PrivacyLabel = 'LOCAL_ONLY',
 ): Promise<BuildBrief> {
-  const model = createModel(choice);
+  const trace = route(idea, label, choice);
+  const effective = trace.cloudAllowed ? choice : 'On-device';
+  const model = createModel(effective, trace.mode === 'PREFER_IN_CLOUD');
+  const started = performance.now();
 
-  if (choice !== 'Cloud') {
+  if (effective !== 'Cloud') {
     const preparation = model.initializeDeviceModel(onModelProgress);
-    if (choice === 'On-device') await preparation;
+    if (effective === 'On-device') {
+      try { await preparation; } catch { throw new Error('BLOCKED: on-device unavailable; cloud fallback denied.'); }
+    }
     else void preparation.catch(() => undefined);
   }
 
@@ -76,5 +83,6 @@ export async function generateBuildBrief(
   if (source !== 'on_device' && source !== 'in_cloud') {
     throw new Error('Firebase AI Logic returned a response without an inference source.');
   }
-  return { text, source };
+  if (!trace.cloudAllowed && source !== 'on_device') throw new Error('POLICY_VIOLATION: unexpected inference source');
+  return { text, source, trace: { ...trace, source, latencyMs: Math.round(performance.now() - started) } };
 }

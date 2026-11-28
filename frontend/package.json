@@ -5,20 +5,25 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "build": "tsc --noEmit && vite build && node scripts/prerender-seo.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:rules": "node --test tests/firestore.rules.test.mjs"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "firebase": "^12.5.0",
     "lucide-react": "^0.468.0",
-    "firebase": "^12.5.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.3",
     "vite": "^6.0.5"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
   }
 }

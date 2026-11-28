@@ -13,6 +13,7 @@ import {
   type User,
 } from 'firebase/auth';
 import {
+  addDoc,
   collection,
   connectFirestoreEmulator,
   doc,
@@ -22,7 +23,9 @@ import {
   orderBy,
   query,
   setDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
+import type { AgentTrustResult, TrustDecision } from './agentTrust';
 import type { StudioProject } from './studio';
 import { firebaseApp } from './firebaseApp';
 import { firebaseAppCheckReady } from './firebaseConfig';
@@ -38,6 +41,7 @@ if (firebaseApp && auth && db && import.meta.env.DEV && import.meta.env.VITE_USE
 
 const MAX_PROJECT_BYTES = 450_000;
 const MAX_FILE_PATH_LENGTH = 200;
+const MAX_PROJECT_FILES = 10;
 
 export function watchUser(callback: (user: User | null) => void): () => void {
   if (!auth) {
@@ -89,7 +93,7 @@ function validateProject(project: StudioProject): void {
     Number.isNaN(Date.parse(project.createdAt)) ||
     project.version !== 1 ||
     !Array.isArray(project.files) ||
-    project.files.length > 30 ||
+    project.files.length > MAX_PROJECT_FILES ||
     project.files.some((file) =>
       !file ||
       typeof file.path !== 'string' ||
@@ -97,6 +101,7 @@ function validateProject(project: StudioProject): void {
       file.path.length > MAX_FILE_PATH_LENGTH ||
       file.path.startsWith('/') ||
       file.path.includes('\\') ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) ||
       file.path.split('/').some((part) => !part || part === '.' || part === '..') ||
       typeof file.content !== 'string',
     )
@@ -137,7 +142,7 @@ function isProject(value: unknown): value is StudioProject & { updatedAt: string
     typeof project.ownerId !== 'string' ||
     project.version !== 1 ||
     !Array.isArray(project.files) ||
-    project.files.length > 30
+    project.files.length > MAX_PROJECT_FILES
   ) return false;
 
   return project.files.every((file) =>
@@ -147,6 +152,7 @@ function isProject(value: unknown): value is StudioProject & { updatedAt: string
     file.path.length <= MAX_FILE_PATH_LENGTH &&
     !file.path.startsWith('/') &&
     !file.path.includes('\\') &&
+    /^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(file.path) &&
     !file.path.split('/').some((part) => !part || part === '.' || part === '..') &&
     typeof file.content === 'string',
   );
@@ -163,4 +169,59 @@ export async function downloadProjects(user: User): Promise<StudioProject[]> {
     .map((document) => document.data())
     .filter(isProject)
     .map(({ name, prompt, files, createdAt, version }) => ({ name, prompt, files, createdAt, version }));
+}
+export type SavedAgentTrustCheck = {
+  id: string;
+  agentName: string;
+  agentRef: string;
+  operation: string;
+  riskLevel: 'low' | 'elevated' | 'high';
+  score: number;
+  decision: TrustDecision;
+  createdAt: string;
+};
+
+export async function saveAgentTrustCheck(user: User, result: AgentTrustResult): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured.');
+  if (result.agentName.length > 80 || result.agentRef.length > 120 || result.operation.length > 120) {
+    throw new Error('Shorten the agent details before saving this check.');
+  }
+  await addDoc(collection(db, 'users', user.uid, 'agentTrustChecks'), {
+    schemaVersion: 1,
+    ownerId: user.uid,
+    agentName: result.agentName.trim(),
+    agentRef: result.agentRef.trim(),
+    operation: result.operation,
+    riskLevel: result.riskLevel,
+    score: result.score,
+    decision: result.decision,
+    humanSignal: result.humanSignal,
+    signals: result.signals,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function loadAgentTrustChecks(user: User): Promise<SavedAgentTrustCheck[]> {
+  if (!db) throw new Error('Firebase is not configured.');
+  const snapshot = await getDocs(query(
+    collection(db, 'users', user.uid, 'agentTrustChecks'),
+    orderBy('createdAt', 'desc'),
+    limit(8),
+  ));
+  return snapshot.docs.map((document) => {
+    const data = document.data();
+    const createdAt = data.createdAt && typeof data.createdAt.toDate === 'function'
+      ? data.createdAt.toDate().toLocaleString()
+      : 'Just now';
+    return {
+      id: document.id,
+      agentName: String(data.agentName || 'Agent'),
+      agentRef: String(data.agentRef || ''),
+      operation: String(data.operation || ''),
+      riskLevel: data.riskLevel,
+      score: Number(data.score || 0),
+      decision: data.decision,
+      createdAt,
+    };
+  });
 }

@@ -3,19 +3,96 @@ service cloud.firestore {
  match /databases/{database}/documents {
   match /users/{userId}/projects/{projectId} {
    function owner(){return request.auth != null && request.auth.uid == userId;}
+   function validFile(file) {
+    return file is map
+     && file.keys().hasOnly(['path','content'])
+     && file.keys().hasAll(['path','content'])
+     && file.path is string && file.path.size()>0 && file.path.size()<=200
+     && file.path.matches('^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)*$')
+     && file.content is string && file.content.size()<=450000;
+   }
+   function validFiles(files) {
+    return files is list && files.size()<=10
+     && (files.size() <= 0 || validFile(files[0]))
+     && (files.size() <= 1 || validFile(files[1]))
+     && (files.size() <= 2 || validFile(files[2]))
+     && (files.size() <= 3 || validFile(files[3]))
+     && (files.size() <= 4 || validFile(files[4]))
+     && (files.size() <= 5 || validFile(files[5]))
+     && (files.size() <= 6 || validFile(files[6]))
+     && (files.size() <= 7 || validFile(files[7]))
+     && (files.size() <= 8 || validFile(files[8]))
+     && (files.size() <= 9 || validFile(files[9]))
+    ;
+   }
    function valid(){
     let p=request.resource.data;
     return p.keys().hasOnly(['name','prompt','files','createdAt','version','ownerId','updatedAt'])
      && p.keys().hasAll(['name','prompt','files','createdAt','version','ownerId','updatedAt'])
      && p.ownerId==userId && p.name is string && p.name.size()>0 && p.name.size()<=40
+     && p.name.matches('^[a-z0-9][a-z0-9-]{0,39}$')
      && p.name==projectId && p.prompt is string && p.prompt.size()<=1200
      && p.createdAt is string && p.createdAt.size()<=40
      && p.updatedAt is string && p.updatedAt.size()<=40
-     && p.version==1 && p.files is list && p.files.size()<=30
+     && p.version==1 && validFiles(p.files)
     ;
    }
    allow get,list: if owner();
-   allow create,update: if owner() && valid();
+   allow create: if owner() && valid();
+   // Keep the creation time stable on edits; only updatedAt may advance.
+   allow update: if owner() && valid()
+    && request.resource.data.createdAt == resource.data.createdAt;
+   allow delete: if owner();
+  }
+  match /users/{userId}/agentTrustChecks/{checkId} {
+   function owner() {
+    return request.auth != null && request.auth.uid == userId;
+   }
+
+   function validTrustCheck() {
+    let d = request.resource.data;
+    let s = d.signals;
+    return d.keys().hasOnly([
+      'schemaVersion','ownerId','agentName','agentRef','operation','riskLevel',
+      'score','decision','humanSignal','signals','createdAt'
+     ])
+     && d.keys().hasAll([
+      'schemaVersion','ownerId','agentName','agentRef','operation','riskLevel',
+      'score','decision','humanSignal','signals','createdAt'
+     ])
+     && d.schemaVersion is int && d.schemaVersion == 1
+     && d.ownerId is string && d.ownerId == userId
+     && d.agentName is string && d.agentName.size() > 0 && d.agentName.size() <= 80
+     && d.agentRef is string && d.agentRef.size() > 0 && d.agentRef.size() <= 120
+     && d.operation is string && d.operation.size() > 0 && d.operation.size() <= 120
+     && d.riskLevel in ['low','elevated','high']
+     && d.score is int && d.score >= 0 && d.score <= 100
+     && d.decision in ['ALLOW','STEP_UP','HOLD','BLOCK']
+     && d.humanSignal in ['clear','pause','distress']
+     && s is map
+     && s.keys().hasOnly([
+      'credentialVerified','signatureValid','scopeMatches','behaviorNormal',
+      'appCheckConfigured','humanConfirmed'
+     ])
+     && s.keys().hasAll([
+      'credentialVerified','signatureValid','scopeMatches','behaviorNormal',
+      'appCheckConfigured','humanConfirmed'
+     ])
+     && s.credentialVerified is bool
+     && s.signatureValid is bool
+     && s.scopeMatches is bool
+     && s.behaviorNormal is bool
+     && s.appCheckConfigured is bool
+     && s.humanConfirmed is bool
+     && d.createdAt is timestamp
+     && d.createdAt <= request.time
+     && d.createdAt >= request.time - duration.value(5, 'm');
+   }
+
+   // A user's audit trail is private and append-only from the client.
+   allow get, list: if owner();
+   allow create: if owner() && validTrustCheck();
+   allow update: if false;
    allow delete: if owner();
   }
  }

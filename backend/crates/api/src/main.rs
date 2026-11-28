@@ -13,6 +13,8 @@ use uuid::Uuid;
 use xf_agent_core::{AgentTask, TaskState};
 use xf_policy::{Decision, evaluate};
 
+const MAX_IN_MEMORY_TASKS: usize = 1_000;
+
 #[derive(Clone)]
 struct AppState {
     tasks: Arc<RwLock<HashMap<Uuid, AgentTask>>>,
@@ -87,7 +89,16 @@ async fn create_task(
             Json(json!({"error":e.to_string()})),
         )
     })?;
-    state.tasks.write().await.insert(task.id, task.clone());
+    let mut tasks = state.tasks.write().await;
+    if tasks.len() >= MAX_IN_MEMORY_TASKS {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(
+                json!({"error":"task_store_full","message":"The development task store is full; restart the service to clear it."}),
+            ),
+        ));
+    }
+    tasks.insert(task.id, task.clone());
     Ok((StatusCode::CREATED, Json(task)))
 }
 

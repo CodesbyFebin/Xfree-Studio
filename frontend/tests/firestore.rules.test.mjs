@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { after, before, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import {
   assertFails,
   assertSucceeds,
@@ -84,4 +84,52 @@ test('an edit cannot rewrite project creation time', async () => {
   const ref = doc(alice, 'users/alice/projects/demo-project');
   await assertSucceeds(setDoc(ref, project()));
   await assertFails(updateDoc(ref, { createdAt: '2026-11-28T00:00:00.000Z' }));
+});
+
+function trustCheck(ownerId = 'alice') {
+  return {
+    schemaVersion: 1,
+    ownerId,
+    agentName: 'Demo Agent',
+    agentRef: 'did:web:agent.example',
+    operation: 'Prepare transfer for human review',
+    riskLevel: 'elevated',
+    score: 70,
+    decision: 'STEP_UP',
+    humanSignal: 'pause',
+    signals: {
+      credentialVerified: true,
+      signatureValid: true,
+      scopeMatches: true,
+      behaviorNormal: false,
+      appCheckConfigured: true,
+      humanConfirmed: false,
+    },
+    createdAt: serverTimestamp(),
+  };
+}
+
+test('an owner can append and read a private Trust Gate check', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const checks = collection(alice, 'users/alice/agentTrustChecks');
+  const created = await assertSucceeds(addDoc(checks, trustCheck()));
+  const snapshot = await assertSucceeds(getDoc(created));
+  assert.equal(snapshot.data()?.ownerId, 'alice');
+  assert.equal(snapshot.data()?.decision, 'STEP_UP');
+});
+
+test('Trust Gate history is private and cannot be edited', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const bob = testEnv.authenticatedContext('bob').firestore();
+  const created = await assertSucceeds(addDoc(collection(alice, 'users/alice/agentTrustChecks'), trustCheck()));
+  await assertFails(getDoc(doc(bob, `users/alice/agentTrustChecks/${created.id}`)));
+  await assertFails(updateDoc(created, { decision: 'ALLOW' }));
+});
+
+test('Trust Gate writes reject forged ownership and malformed decision records', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const checks = collection(alice, 'users/alice/agentTrustChecks');
+  await assertFails(addDoc(checks, trustCheck('bob')));
+  await assertFails(addDoc(checks, { ...trustCheck(), score: 101 }));
+  await assertFails(addDoc(checks, { ...trustCheck(), signals: { credentialVerified: true } }));
 });

@@ -7,11 +7,15 @@ import { firebaseAppCheckReady, firebaseEnabled } from './firebaseConfig';
 import './style.css';
 import { Landing } from './Landing';
 import './landing.css';
+import './home.css';
+import './seo.css';
+import { getSEOPage, SeoPageView } from './seoPages';
 
-type Tab = 'Command' | 'Files' | 'Tools' | 'AI' | 'Projects';
+type Tab = 'Command' | 'Files' | 'Tools' | 'AI' | 'Trust' | 'Projects';
 type Mode = AIChoice;
 const hybridAIReady = firebaseEnabled && firebaseAppCheckReady;
 const WorkflowLab = lazy(() => import('./WorkflowLab').then(module => ({ default: module.WorkflowLab })));
+const AgentTrustGate = lazy(() => import('./AgentTrustGate').then(module => ({ default: module.AgentTrustGate })));
 const StudioWorkspace = lazy(() => import('./StudioWorkspace').then((module) => ({ default: module.StudioWorkspace })));
 const suggestions = [
   { icon: Code2, label: 'Plan a useful offline-first developer tool' },
@@ -21,7 +25,7 @@ const suggestions = [
   { icon: Globe, label: 'Define a clear first user and problem' },
   { icon: PenLine, label: 'Create a testable launch plan' },
 ];
-const navigation: Tab[] = ['Command', 'Files', 'Tools', 'AI', 'Projects'];
+const navigation: Tab[] = ['Command', 'Files', 'Tools', 'AI', 'Trust', 'Projects'];
 const categories = [
   { name: 'Developer', sub: 'Code. Build. Debug.', icon: Code2 },
   { name: 'AI Tools', sub: 'Create. Analyze. Automate.', icon: BrainCircuit },
@@ -34,12 +38,12 @@ declare global { interface Window { SpeechRecognition?: SpeechCtor; webkitSpeech
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [tab, setTab] = useState<Tab>('Command');
+  const [tab, setTab] = useState<Tab>(() => new URLSearchParams(window.location.search).get('view') === 'trust' ? 'Trust' : 'Command');
   const [mode, setMode] = useState<Mode>('Hybrid');
   const [publicInput, setPublicInput] = useState(false);
   const [trace, setTrace] = useState<RoutingTrace | null>(null);
   const [drawer, setDrawer] = useState(false);
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(() => new URLSearchParams(window.location.search).get('prompt') || '');
   const [reply, setReply] = useState('Describe a real user and the problem you want to solve. X will turn it into a focused first-release plan.');
   const [listening, setListening] = useState(false);
   const [notice, setNotice] = useState('');
@@ -123,7 +127,7 @@ function App() {
     </header>
     <main className="dashboard">
       <aside className={'left-rail ' + (drawer ? 'drawer-open' : '')}>
-        <nav className="rail-menu" aria-label="Main menu">{['AI ASSISTANT','TOOLS','AUTOMATION','PROJECTS','FILES','SETTINGS'].map((name,i) => <button key={name} className={i === 0 && tab === 'Command' ? 'active' : ''} onClick={() => { setTab(name === 'PROJECTS' ? 'Projects' : name === 'FILES' ? 'Files' : name === 'TOOLS' ? 'Tools' : name === 'AI ASSISTANT' ? 'Command' : 'AI');setDrawer(false); }}>{name}</button>)}</nav>
+        <nav className="rail-menu" aria-label="Main menu">{['AI ASSISTANT','TOOLS','AUTOMATION','PROJECTS','FILES','KNOW YOUR AGENT'].map((name,i) => <button key={name} className={(i === 0 && tab === 'Command') || (name === 'KNOW YOUR AGENT' && tab === 'Trust') ? 'active' : ''} onClick={() => { setTab(name === 'PROJECTS' ? 'Projects' : name === 'FILES' ? 'Files' : name === 'TOOLS' ? 'Tools' : name === 'AI ASSISTANT' ? 'Command' : name === 'KNOW YOUR AGENT' ? 'Trust' : 'AI');setDrawer(false); }}>{name}</button>)}</nav>
         <div className="rail-card"><div className="card-title">HYBRID AI <span className="online-dot"/></div><p>DEVICE FIRST<br/>CLOUD FALLBACK<br/>YOU CHOOSE<br/>PRIVATE BY DESIGN</p></div>
         <div className="rail-card voice-card"><Volume2 size={34}/><p>VOICE READY</p></div>
       </aside>
@@ -139,7 +143,7 @@ function App() {
           <div className="voice-row"><button className="round-control" aria-label="Start or stop voice recognition" disabled={!publicInput} onClick={speak}><Mic size={32}/></button><div className={'waveform ' + (listening ? 'is-listening' : '')} aria-hidden="true">{Array.from({length:59},(_,i)=><span key={i} style={{height: (7 + Math.abs(Math.sin(i*1.7)*Math.cos(i*.34))*50)+'px'}} />)}</div><button className="round-control" aria-label="Use keyboard" onClick={() => document.getElementById('command-input')?.focus()}><Keyboard size={28}/></button></div>
           <div className="voice-caption">{listening ? 'Listening… tap to stop' : 'Tap to speak'}<small>{listening ? 'Microphone is active' : 'or type your request below'}</small></div>
           <div className="suggestions">{suggestions.map(({icon:Icon,label})=><button key={label} onClick={() => {setPrompt(label);setNotice('Prompt ready. Choose Hybrid, Device, or Cloud, then send it.');}}><Icon size={19}/>{label}</button>)}</div>
-        </> : tab === 'Projects' ? <Suspense fallback={<div className="tab-panel">Opening the project workspace…</div>}><StudioWorkspace initialPrompt={briefIdea} /></Suspense> : tab === 'AI' ? <Suspense fallback={<div>Opening workflow lab…</div>}><WorkflowLab /></Suspense> : <div className="tab-panel"><div className="eyebrow">XFREESTUDIO / {tab.toUpperCase()}</div><h1>{tab}</h1><p>{tab === 'Files' ? 'File contents stay out of this build-brief demo. You can still scaffold and preview a starter project.' : tab === 'Tools' ? 'Use the local project builder, then shape your next step with the hybrid AI assistant.' : 'Firebase AI Logic uses Gemini Nano on supported Chrome desktops and falls back to the cloud model when needed.'}</p><button className="primary-action" onClick={() => setTab('Command')}>Try the hybrid assistant <ArrowRight size={18}/></button></div>}
+        </> : tab === 'Projects' ? <Suspense fallback={<div className="tab-panel">Opening the project workspace…</div>}><StudioWorkspace initialPrompt={briefIdea} /></Suspense> : tab === 'AI' ? <Suspense fallback={<div>Opening workflow lab…</div>}><WorkflowLab /></Suspense> : tab === 'Trust' ? <Suspense fallback={<div>Loading Trust Gate…</div>}><AgentTrustGate /></Suspense> : <div className="tab-panel"><div className="eyebrow">XFREESTUDIO / {tab.toUpperCase()}</div><h1>{tab}</h1><p>{tab === 'Files' ? 'File contents stay out of this build-brief demo. You can still scaffold and preview a starter project.' : tab === 'Tools' ? 'Use the local project builder, then shape your next step with the hybrid AI assistant.' : 'Firebase AI Logic uses Gemini Nano on supported Chrome desktops and falls back to the cloud model when needed.'}</p><button className="primary-action" onClick={() => setTab('Command')}>Try the hybrid assistant <ArrowRight size={18}/></button></div>}
       </section>
       <aside className="right-rail"><div className="rail-card jarvis"><div className="card-title">BUILD BRIEF <span className="online-dot"/></div>{['REAL USER','CORE PROBLEM','SMALL MVP','BUILD STEPS','TEST SIGNAL'].map((stage,i)=><div className={'stage ' + (i === 0 ? 'active' : '')} key={stage}><span className="stage-dot"/>{stage}</div>)}</div><div className="perks">{[[Zap,'FAST'],[ShieldCheck,'PRIVATE'],[Globe,'HYBRID'],[Sparkles,'FALLBACK'],[Check,'YOUR CHOICE']].map(([Icon,label])=>{const I=Icon as typeof Zap;return <div key={label as string}><I size={19}/>{label as string}</div>})}</div><div className="rail-card voice-card"><strong>WHAT X RETURNS</strong><p>Outcome<br/>MVP<br/>Build sequence<br/>Risks</p></div></aside>
     </main>
@@ -148,7 +152,7 @@ function App() {
       <label><input type="checkbox" checked={publicInput} disabled={sending} onChange={e => setPublicInput(e.target.checked)}/> Explicitly allow cloud processing of this input (PUBLIC)</label><p className="ai-disclosure">{!publicInput ? 'LOCAL_ONLY: cloud inference denied regardless of mode.' : mode === 'Hybrid' ? 'Hybrid prefers Gemini Nano, but may send your prompt to Firebase AI Logic cloud if the local model is unavailable. Choose Device to keep it local.' : mode === 'On-device' ? 'Device mode never sends the prompt to cloud. Chrome may need to download Gemini Nano first.' : 'Cloud mode sends the prompt to the Firebase AI Logic model. App Check protects the request.'}</p>
       {notice && <p className="notice" role="status">{notice} <button aria-label="Dismiss notice" onClick={() => setNotice('')}><X size={14}/></button></p>}
       <div className="category-grid">{categories.map(({name,sub,icon:Icon})=><button key={name} onClick={() => setTab(name === 'Developer' ? 'Projects' : 'Tools')}><Icon size={28}/><strong>{name}</strong><small>{sub}</small></button>)}</div>
-      <nav className="bottom-nav" aria-label="Workspace tabs">{navigation.map(name=>{const Icon = name === 'Command' ? Volume2 : name === 'Files' ? Folder : name === 'Tools' ? Grid2X2 : name === 'AI' ? Sparkles : FileText;return <button key={name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}><Icon size={27}/><span>{name}</span></button>})}</nav>
+      <nav className="bottom-nav" aria-label="Workspace tabs">{navigation.map(name=>{const Icon = name === 'Command' ? Volume2 : name === 'Files' ? Folder : name === 'Tools' ? Grid2X2 : name === 'AI' ? Sparkles : name === 'Trust' ? ShieldCheck : FileText;return <button key={name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}><Icon size={27}/><span>{name}</span></button>})}</nav>
     </section>
     <footer className="footer"><div className="footer-brand"><i>X</i>Free</div><div><strong>FROM IDEA TO A TESTABLE MVP</strong><small>DEVICE FIRST. CLOUD WHEN NEEDED.</small></div><span><span className="online-dot"/> FIREBASE AI LOGIC</span></footer>
   </div>;
@@ -160,13 +164,18 @@ function Root() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-  function navigate(next: string) {
-    window.history.pushState({}, '', next);
-    setPath(next);
+  function navigate(next: string, prompt?: string) {
+    const destination = new URL(next, window.location.origin);
+    if (prompt) destination.searchParams.set('prompt', prompt);
+    window.history.pushState({}, '', destination.pathname + destination.search);
+    setPath(destination.pathname);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
-  return path.replace(/\/+$/, '') === '/studio'
-    ? <div><button className="back-to-xfree" onClick={() => navigate('/')}>← XFree Home</button><App /></div>
-    : <Landing openStudio={() => navigate('/studio')} />;
+  const normalized = path.replace(/\/+$/, '') || '/';
+  const contentPage = getSEOPage(normalized);
+  return normalized === '/studio'
+    ? <App />
+    : contentPage ? <SeoPageView page={contentPage} />
+    : <Landing openStudio={(prompt) => navigate('/studio', prompt)} openTrust={() => navigate('/studio?view=trust')} />;
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><Root/></React.StrictMode>);

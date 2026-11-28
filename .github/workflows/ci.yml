@@ -28,6 +28,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install
+      - run: npm ci
       - run: npm run build
       - run: npx --yes firebase-tools@14.27.0 --config ../firebase.json emulators:exec --project demo-xfree-studio-rules --only firestore "npm run test:rules"

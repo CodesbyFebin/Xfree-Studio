@@ -44,5 +44,56 @@ service cloud.firestore {
     && request.resource.data.createdAt == resource.data.createdAt;
    allow delete: if owner();
   }
+  match /users/{userId}/agentTrustChecks/{checkId} {
+   function owner() {
+    return request.auth != null && request.auth.uid == userId;
+   }
+
+   function validTrustCheck() {
+    let d = request.resource.data;
+    let s = d.signals;
+    return d.keys().hasOnly([
+      'schemaVersion','ownerId','agentName','agentRef','operation','riskLevel',
+      'score','decision','humanSignal','signals','createdAt'
+     ])
+     && d.keys().hasAll([
+      'schemaVersion','ownerId','agentName','agentRef','operation','riskLevel',
+      'score','decision','humanSignal','signals','createdAt'
+     ])
+     && d.schemaVersion is int && d.schemaVersion == 1
+     && d.ownerId is string && d.ownerId == userId
+     && d.agentName is string && d.agentName.size() > 0 && d.agentName.size() <= 80
+     && d.agentRef is string && d.agentRef.size() > 0 && d.agentRef.size() <= 120
+     && d.operation is string && d.operation.size() > 0 && d.operation.size() <= 120
+     && d.riskLevel in ['low','elevated','high']
+     && d.score is int && d.score >= 0 && d.score <= 100
+     && d.decision in ['ALLOW','STEP_UP','HOLD','BLOCK']
+     && d.humanSignal in ['clear','pause','distress']
+     && s is map
+     && s.keys().hasOnly([
+      'credentialVerified','signatureValid','scopeMatches','behaviorNormal',
+      'appCheckConfigured','humanConfirmed'
+     ])
+     && s.keys().hasAll([
+      'credentialVerified','signatureValid','scopeMatches','behaviorNormal',
+      'appCheckConfigured','humanConfirmed'
+     ])
+     && s.credentialVerified is bool
+     && s.signatureValid is bool
+     && s.scopeMatches is bool
+     && s.behaviorNormal is bool
+     && s.appCheckConfigured is bool
+     && s.humanConfirmed is bool
+     && d.createdAt is timestamp
+     && d.createdAt <= request.time
+     && d.createdAt >= request.time - duration.value(5, 'm');
+   }
+
+   // A user's audit trail is private and append-only from the client.
+   allow get, list: if owner();
+   allow create: if owner() && validTrustCheck();
+   allow update: if false;
+   allow delete: if owner();
+  }
  }
 }
